@@ -1,0 +1,385 @@
+% Copyright (c) 2013  SRI International
+
+% '+' matches anything in grammatical-relation names, and is used for
+% patterns like prep_to, prep_from, etc
+% Note that order matters in this file. The first matching rule will be used.
+
+% If there is more than one TD on the left-hand side, the first one is the "main" one.
+% The algorithm will first try to match on the main TD. If it matches, it will look at 
+% ALL the other TDs in the sentence to match the additional TD entries in the rule. 
+
+% Top-level formula rules
+%root(?g,?n) & cop(?n,is) & nsubj(?n,?d)   : top(?d)
+%root(?r1,is) & nsubj(is,?r2)              : top(?r2)
+%root(?g,?n) & nsubjpass(?n,?d) : top(?d)
+root(?g,?d)                    : top(?d)
+
+% less-than, greater-than, fewer-than, etc
+%nsubj(?gr,?sm) & mwe(than,?rel) & quantmod(?gr,than) : nil
+%nsubj(less,?sm) & prep_than(less,?gr) : rel(<,?sm,?gr)
+
+%nsubj(?larger,?smaller) & nsubj(less,?smaller) & cop(less,is) & prep(less,than) & amod(?larger, equal) & conj_or(less,?larger) & dep(?larger, to)  : rel(greater_than_or_equal,?larger,?smaller)
+%nsubj(?larger,?smaller) & nsubj(less,?smaller) & cop(less,is) : rel(arg2,less,?larger)
+
+nsubj(?larger,?smaller) & cop(?larger,is) & advmod(?larger, than) & advmod(than, less)  : rel(greater_than,?larger,?smaller)
+nsubj(?larger,?smaller) & cop(?larger,is) & advmod(?larger, than) & dep(than, greater)  : rel(less_than,?larger,?smaller)
+nsubj(?larger,?smaller) & cop(?larger,is) & advmod(?larger, at) & pobj(at, least)  : rel(less_than_or_equal,?larger,?smaller)
+nsubj(?larger,?smaller) & cop(?larger,is) & advmod(?larger, at) & pobj(at, most)  : rel(greater_than_or_equal,?larger,?smaller)
+
+
+% Implication rules
+prep_upon(?g,?d)                 : implies(?d,?g)
+prepc_upon(?g,?d)                : implies(?d,?g)
+advcl(?g,?d) & advmod(?d,when)   : implies(?d,?g)
+advcl(?g,?d) & mark(?d,once)     : implies(?d,?g)
+advcl(?g,?d) & mark(?d,if)       : implies(?d,?g)
+
+% Temporal relations
+advcl(?g,?d) & mark(?d,until) : trel(until,?g,?d)
+prep_after(?g,?d)             : trel(after,?g,?d)
+prepc_after(?g,?d)            : trel(after,?g,?d)
+prep_before(?g,?d)            : trel(before,?g,?d)
+prepc_before(?g,?d)           : trel(before,?g,?d)
+prep_during(?g,?d)            : trel(during,?g,?d)
+prepc_during(?g,?d)           : trel(during,?g,?d)
+prep_following(?g,?d)         : trel(after,?g,?d)
+prepc_following(?g,?d)        : trel(after,?g,?d)
+prep_since(?g,?d)             : trel(since,?g,?d)
+prepc_since(?g,?d)            : trel(since,?g,?d)
+
+% TODO: subsequent, subsequently
+
+% Temporal attributes (unary)
+advmod(?g,always)     : tattr(always,?g)
+advmod(?g,eventually) : tattr(eventually,?g)
+neg(?g,never)         : tattr(never,?g)
+
+% Conjunction rules
+conj_and(?g,?d) & entity(?g) & entity(?d)  : and(?d,?g)
+conj_and(?g,?d)    : and(?g,?d)
+
+% Disjunction rules
+conj_or(?g,?d) & entity(?g) & entity(?d)  : or(?d,?g)
+conj_or(?g,?d)     : or(?g,?d)
+
+% Negation rules
+neg(?g,?d)         : not(?g)
+
+% Universal quantification rules
+det(?g,any)        : forall(?g)
+predet(?g,any)     : forall(?g)
+det(?g,all)        : forall(?g)
+predet(?g,all)     : forall(?g)
+
+% Existential quantification rules
+det(?g,some)       : exists(?g)
+det(?g,a)          : exists(?g)
+det(?g,an)         : exists(?g)
+
+% "Unique" quantifier
+det(?g,the)        : unique(?g)
+
+% Rules for "is"
+%nsubjpass(?g,?d) & auxpass (?g,is) : attr(?g,?d)
+%nsubj(?g,?d) & cop(?g,is)           : attr(?g,?d)
+%nsubj(is,?n) & prep_in(is,?o)       : rel(in,?n,?o)
+
+% The following only apply to events
+nsubj(?g,?d) & event(?g)     : rel(agent,?g,?d)
+csubj(?g,?d) & event(?g)     : rel(agent,?g,?d)
+agent(?g,?d) & event(?g)     : rel(agent,?g,?d)
+
+nsubjpass(?g,?d) & event(?g) : rel(object,?g,?d)
+csubjpass(?g,?d) & event(?g) : rel(object,?g,?d)
+dobj(?g,?d) & event(?g)      : rel(object,?g,?d)
+iobj(?g,?d) & event(?g)      : rel(object,?g,?d)
+pobj(?g,?d) & event(?g)      : rel(object,?g,?d)
+
+xcomp(?g,?d) & event(?g)     : rel(theme,?g,?d)
+acomp(?g,?d) & event(?g)     : rel(theme,?g,?d)
+%ccomp(?g,?d) & event(?g)    : rel(theme,?g,?d)  too many false matches
+
+partmod(?g,?d) & event(?g)   : rel(theme,?d,?g)
+
+quantmod(?a,?b) & event(?g)  : rel(theme,?b,?a)
+
+% Arguments for non-events
+% "argument 1 of ?g is ?d" etc, e.g. "argument 1 of equals is foo"
+nsubj(?g,?d) & pred(?g)     : rel(arg1,?g,?d)
+csubj(?g,?d) & pred(?g)     : rel(arg1,?g,?d)
+agent(?g,?d) & pred(?g)     : rel(arg1,?g,?d)
+
+nsubjpass(?g,?d) & pred(?g) : rel(arg2,?g,?d)
+csubjpass(?g,?d) & pred(?g) : rel(arg2,?g,?d)
+dobj(?g,?d) & pred(?g)      : rel(arg2,?g,?d)
+iobj(?g,?d) & pred(?g)      : rel(arg2,?g,?d)
+pobj(?g,?d) & pred(?g)      : rel(arg2,?g,?d)
+
+xcomp(?g,?d) & pred(?g)     : rel(arg2,?g,?d)
+acomp(?g,?d) & pred(?g)     : rel(arg2,?g,?d)
+%ccomp(?g,?d) & pred(?g)    : rel(arg2,?g,?d)  too many false matches
+
+partmod(?g,?d) & pred(?g)   : rel(arg2,?d,?g)
+quantmod(?a,?b) & pred(?g)  : rel(arg2,?b,?a)
+
+prep_than(?g,?d) & pred(?g)  : rel(arg2,?g,?d)
+prepc_than(?g,?d) & pred(?g) : rel(arg2,?g,?d)
+
+
+% Arguments for entities
+partmod(?g,?d) & entity(?g)   : rel(theme,?g,?d)
+
+% Bigram rules - these apply only to entities?
+amod(?g,?d)        : bigram(?g,?d)
+nn(?g,?d)          : bigram(?g,?d)
+appos(?g,?d)       : bigram(?g,?d)
+prt(?g,?d)         : bigram(?g,?d)
+mwe(?g,?d)         : bigram(?g,?d)
+
+% missing: rcmod, advmod
+
+% Preposition rules
+
+% The list below did not include this. There may be other multi-word ones supported
+% by the Stanford parser
+prep_in_front_of(?g,?d)  : rel(in_front_of,?g,?d)
+prepc_in_front_of(?g,?d) : rel(in_front_of,?g,?d)
+
+% All the ones from this list are covered here (the temporal ones are covered above)
+% http://www.englishclub.com/grammar/prepositions-list.htm
+
+prep_aboard(?g,?d)       : rel(aboard,?g,?d)
+prepc_aboard(?g,?d)      : rel(aboard,?g,?d)
+prep_about(?g,?d)        : rel(about,?g,?d)
+prepc_about(?g,?d)       : rel(about,?g,?d)
+prep_above(?g,?d)        : rel(above,?g,?d)
+prepc_above(?g,?d)       : rel(above,?g,?d)
+prep_across(?g,?d)       : rel(across,?g,?d)
+prepc_across(?g,?d)      : rel(across,?g,?d)
+prep_against(?g,?d)      : rel(against,?g,?d)
+prepc_against(?g,?d)     : rel(against,?g,?d)
+prep_along(?g,?d)        : rel(along,?g,?d)
+prepc_along(?g,?d)       : rel(along,?g,?d)
+prep_amid(?g,?d)         : rel(amid,?g,?d)
+prepc_amid(?g,?d)        : rel(amid,?g,?d)
+prep_among(?g,?d)        : rel(among,?g,?d)
+prepc_among(?g,?d)       : rel(among,?g,?d)
+prep_anti(?g,?d)         : rel(anti,?g,?d)
+prepc_anti(?g,?d)        : rel(anti,?g,?d)
+prep_around(?g,?d)       : rel(around,?g,?d)
+prepc_around(?g,?d)      : rel(around,?g,?d)
+prep_as(?g,?d)           : rel(as,?g,?d)
+prepc_as(?g,?d)          : rel(as,?g,?d)
+prep_at(?g,?d)           : rel(at,?g,?d)
+prepc_at(?g,?d)          : rel(at,?g,?d)
+
+prep_behind(?g,?d)       : rel(behind,?g,?d)
+prepc_behind(?g,?d)      : rel(behind,?g,?d)
+prep_below(?g,?d)        : rel(below,?g,?d)
+prepc_below(?g,?d)       : rel(below,?g,?d)
+prep_beneath(?g,?d)      : rel(beneath,?g,?d)
+prepc_beneath(?g,?d)     : rel(beneath,?g,?d)
+prep_beside(?g,?d)       : rel(beside,?g,?d)
+prepc_beside(?g,?d)      : rel(beside,?g,?d)
+prep_besides(?g,?d)      : rel(besides,?g,?d)
+prepc_besides(?g,?d)     : rel(besides,?g,?d)
+prep_between(?g,?d)      : rel(between,?g,?d)
+prepc_between(?g,?d)     : rel(between,?g,?d)
+prep_beyond(?g,?d)       : rel(beyond,?g,?d)
+prepc_beyond(?g,?d)      : rel(beyond,?g,?d)
+prep_but(?g,?d)          : rel(but,?g,?d)
+prepc_but(?g,?d)         : rel(but,?g,?d)
+prep_by(?g,?d)           : rel(by,?g,?d)
+prepc_by(?g,?d)          : rel(by,?g,?d)
+
+prep_concerning(?g,?d)   : rel(concerning,?g,?d)
+prepc_concerning(?g,?d)  : rel(concerning,?g,?d)
+prep_considering(?g,?d)  : rel(considering,?g,?d)
+prepc_considering(?g,?d) : rel(considering,?g,?d)
+
+prep_despite(?g,?d)      : rel(despite,?g,?d)
+prepc_despite(?g,?d)     : rel(despite,?g,?d)
+prep_down(?g,?d)         : rel(down,?g,?d)
+prepc_down(?g,?d)        : rel(down,?g,?d)
+
+prep_except(?g,?d)       : rel(except,?g,?d)
+prepc_except(?g,?d)      : rel(except,?g,?d)
+prep_excepting(?g,?d)    : rel(excepting,?g,?d)
+prepc_excepting(?g,?d)   : rel(excepting,?g,?d)
+prep_excluding(?g,?d)    : rel(excluding,?g,?d)
+prepc_excluding(?g,?d)   : rel(excluding,?g,?d)
+
+prep_following(?g,?d)    : rel(following,?g,?d)
+prepc_following(?g,?d)   : rel(following,?g,?d)
+prep_for(?g,?d)          : rel(for,?g,?d)
+prepc_for(?g,?d)         : rel(for,?g,?d)
+prep_from(?g,?d)         : rel(from,?g,?d)
+prepc_from(?g,?d)        : rel(from,?g,?d)
+
+prep_in(?g,?d)           : rel(in,?g,?d)
+prepc_in(?g,?d)          : rel(in,?g,?d)
+prep_inside(?g,?d)       : rel(inside,?g,?d)
+prepc_inside(?g,?d)      : rel(inside,?g,?d)
+prep_into(?g,?d)         : rel(into,?g,?d)
+prepc_into(?g,?d)        : rel(into,?g,?d)
+
+prep_like(?g,?d)         : rel(like,?g,?d)
+prepc_like(?g,?d)        : rel(like,?g,?d)
+
+% ?
+prep_minus(?g,?d)        : rel(minus,?g,?d)  
+prepc_minus(?g,?d)       : rel(minus,?g,?d)
+
+prep_near(?g,?d)         : rel(near,?g,?d)  
+prepc_near(?g,?d)        : rel(near,?g,?d)
+
+prep_of(?g,?d)           : rel(of,?g,?d)  
+prepc_of(?g,?d)          : rel(of,?g,?d)
+prep_off(?g,?d)          : rel(off,?g,?d)  
+prepc_off(?g,?d)         : rel(off,?g,?d)
+prep_on(?g,?d)           : rel(on,?g,?d)  
+prepc_on(?g,?d)          : rel(on,?g,?d)
+prep_onto(?g,?d)         : rel(onto,?g,?d)  
+prepc_onto(?g,?d)        : rel(onto,?g,?d)
+prep_opposite(?g,?d)     : rel(opposite,?g,?d)  
+prepc_opposite(?g,?d)    : rel(opposite,?g,?d)
+prep_outside(?g,?d)      : rel(outside,?g,?d)  
+prepc_outside(?g,?d)     : rel(outside,?g,?d)
+prep_over(?g,?d)         : rel(over,?g,?d)  
+prepc_over(?g,?d)        : rel(over,?g,?d)
+
+prep_past(?g,?d)         : rel(past,?g,?d)  
+prepc_past(?g,?d)        : rel(past,?g,?d)
+prep_per(?g,?d)          : rel(per,?g,?d)  
+prepc_per(?g,?d)         : rel(per,?g,?d)
+prep_plus(?g,?d)         : rel(plus,?g,?d)  
+prepc_plus(?g,?d)        : rel(plus,?g,?d)
+
+prep_regarding(?g,?d)    : rel(regarding,?g,?d)  
+prepc_regarding(?g,?d)   : rel(regarding,?g,?d)
+prep_round(?g,?d)        : rel(round,?g,?d)  
+prepc_round(?g,?d)       : rel(round,?g,?d)
+
+prep_save(?g,?d)         : rel(save,?g,?d)  
+prepc_save(?g,?d)        : rel(save,?g,?d)
+
+% prep_than(?g,?d)         : rel(than,?g,?d)
+% prepc_than(?g,?d)        : rel(than,?g,?d)
+prep_through(?g,?d)      : rel(through,?g,?d)
+prepc_through(?g,?d)     : rel(through,?g,?d)
+prep_to(?g,?d)           : rel(to,?g,?d)
+prepc_to(?g,?d)          : rel(to,?g,?d)
+prep_toward(?g,?d)       : rel(toward,?g,?d)
+prepc_toward(?g,?d)      : rel(toward,?g,?d)
+prep_towards(?g,?d)      : rel(towards,?g,?d)
+prepc_towards(?g,?d)     : rel(towards,?g,?d)
+
+prep_under(?g,?d)        : rel(under,?g,?d)
+prepc_under(?g,?d)       : rel(under,?g,?d)
+prep_underneath(?g,?d)   : rel(underneath,?g,?d)
+prepc_underneath(?g,?d)  : rel(underneath,?g,?d)
+prep_unlike(?g,?d)       : rel(unlike,?g,?d)
+prepc_unlike(?g,?d)      : rel(unlike,?g,?d)
+prep_up(?g,?d)           : rel(up,?g,?d)
+prepc_up(?g,?d)          : rel(up,?g,?d)
+
+prep_versus(?g,?d)       : rel(versus,?g,?d)
+prepc_versus(?g,?d)      : rel(versus,?g,?d)
+prep_via(?g,?d)          : rel(via,?g,?d)
+prepc_via(?g,?d)         : rel(via,?g,?d)
+
+prep_with(?g,?d)         : rel(with,?g,?d)
+prepc_with(?g,?d)        : rel(with,?g,?d)
+prep_within(?g,?d)       : rel(within,?g,?d)
+prepc_within(?g,?d)      : rel(within,?g,?d)
+prep_without(?g,?d)      : rel(without,?g,?d)
+prepc_without(?g,?d)     : rel(without,?g,?d)
+
+% Two-words prepositions (from wikipedia)
+% The Stanford parser supports at least some of these. It does not seem to support any three-word prepositions
+
+prep_according_to(?g,?d)  : rel(according_to,?g,?d)
+prepc_according_to(?g,?d) : rel(according_to,?g,?d)
+prep_ahead_of(?g,?d)      : rel(ahead_of,?g,?d)
+prepc_ahead_of(?g,?d)     : rel(ahead_of,?g,?d)
+prep_apart_from(?g,?d)    : rel(apart_from,?g,?d)
+prepc_apart_from(?g,?d)   : rel(apart_from,?g,?d)
+prep_as_for(?g,?d)        : rel(as_for,?g,?d)
+prepc_as_for(?g,?d)       : rel(as_for,?g,?d)
+prep_as_of(?g,?d)         : rel(as_of,?g,?d)
+prepc_as_of(?g,?d)        : rel(as_of,?g,?d)
+prep_as_per(?g,?d)        : rel(as_per,?g,?d)
+prepc_as_per(?g,?d)       : rel(as_per,?g,?d)
+prep_as_regards(?g,?d)    : rel(as_regards,?g,?d)
+prepc_as_regards(?g,?d)   : rel(as_regards,?g,?d)
+prep_aside_from(?g,?d)    : rel(aside_from,?g,?d)
+prepc_aside_from(?g,?d)   : rel(aside_from,?g,?d)
+
+prep_back_to(?g,?d)       : rel(back_to,?g,?d)
+prepc_back_to(?g,?d)      : rel(back_to,?g,?d)
+prep_because_of(?g,?d)    : rel(because_of,?g,?d)
+prepc_because_of(?g,?d)   : rel(because_of,?g,?d)
+
+prep_close_to(?g,?d)      : rel(close_to,?g,?d)
+prepc_close_to(?g,?d)     : rel(close_to,?g,?d)
+
+prep_due_to(?g,?d)        : rel(due_to,?g,?d)
+prepc_due_to(?g,?d)       : rel(due_to,?g,?d)
+
+prep_except_for(?g,?d)    : rel(except_for,?g,?d)
+prepc_except_for(?g,?d)   : rel(except_for,?g,?d)
+
+prep_far_from(?g,?d)      : rel(far_from,?g,?d)
+prepc_far_from(?g,?d)     : rel(far_from,?g,?d)
+
+prep_in_to(?g,?d)         : rel(in_to,?g,?d)
+prepc_in_to(?g,?d)        : rel(in_to,?g,?d)
+prep_inside_of(?g,?d)     : rel(inside_of,?g,?d)
+prepc_inside_of(?g,?d)    : rel(inside_of,?g,?d)
+prep_instead_of(?g,?d)    : rel(instead_of,?g,?d)
+prepc_instead_of(?g,?d)   : rel(instead_of,?g,?d)
+
+prep_left_of(?g,?d)       : rel(left_of,?g,?d)
+prepc_left_of(?g,?d)      : rel(left_of,?g,?d)
+
+prep_near_to(?g,?d)       : rel(near_to,?g,?d)
+prepc_near_to(?g,?d)      : rel(near_to,?g,?d)
+prep_next_to(?g,?d)       : rel(next_to,?g,?d)
+prepc_next_to(?g,?d)      : rel(next_to,?g,?d)
+
+prep_on_to(?g,?d)         : rel(on_to,?g,?d)
+prepc_on_to(?g,?d)        : rel(on_to,?g,?d)
+prep_out_from(?g,?d)      : rel(out_from,?g,?d)
+prepc_out_from(?g,?d)     : rel(out_from,?g,?d)
+prep_out_of(?g,?d)        : rel(out_of,?g,?d)
+prepc_out_of(?g,?d)       : rel(out_of,?g,?d)
+prep_outside_of(?g,?d)    : rel(outside_of,?g,?d)
+prepc_outside_of(?g,?d)   : rel(outside_of,?g,?d)
+prep_owing_to(?g,?d)      : rel(owing_to,?g,?d)
+prepc_owing_to(?g,?d)     : rel(owing_to,?g,?d)
+
+prep_prior_to(?g,?d)       : rel(prior_to,?g,?d)
+prepc_prior_to(?g,?d)      : rel(prior_to,?g,?d)
+prep_pursuant_to(?g,?d)    : rel(pursuant_to,?g,?d)
+prepc_pursuant_to(?g,?d)   : rel(pursuant_to,?g,?d)
+prep_rather_than(?g,?d)    : rel(rather_than,?g,?d)
+prepc_rather_than(?g,?d)   : rel(rather_than,?g,?d)
+prep_regardless_of(?g,?d)  : rel(regardless_of,?g,?d)
+prepc_regardless_of(?g,?d) : rel(regardless_of,?g,?d)
+prep_right_of(?g,?d)       : rel(right_of,?g,?d)
+prepc_right_of(?g,?d)      : rel(right_of,?g,?d)
+
+prep_subsequent_to(?g,?d)  : rel(subsequent_to,?g,?d)
+prepc_subsequent_to(?g,?d) : rel(subsequent_to,?g,?d)
+
+prep_thanks_to(?g,?d)      : rel(thanks_to,?g,?d)
+prepc_thanks_to(?g,?d)     : rel(thanks_to,?g,?d)
+
+prep_that_of(?g,?d)        : rel(that_of,?g,?d)
+prepc_that_of(?g,?d)       : rel(that_of,?g,?d)
+
+prep_up_to(?g,?d)          : rel(up_to,?g,?d)
+prepc_up_to(?g,?d)         : rel(up_to,?g,?d)
+
+prep_where_as(?g,?d)       : rel(where_as,?g,?d)
+prepc_where_as(?g,?d)      : rel(where_as,?g,?d)
