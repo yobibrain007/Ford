@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
+import edu.mit.jwi.item.POS;
 import edu.stanford.nlp.trees.TypedDependency;
 
 
@@ -17,14 +18,12 @@ public class Manager {
 	private Parser ruleParser;
 	
 	
-	public Manager(){
+	public Manager() throws IOException{
 		ruleParser = new Parser();
-		Match.Intialize();
-	}
-	
-	public ArrayList<String> readfile(String path){
-	
-		return null;
+		Matching.intialize();
+		WordNet.intialize();
+		POSTransoformation.intialize();
+		StanfordPOS.intialize();
 	}
 	
 	public Parser parseRules(ArrayList<String> plainRules){
@@ -33,31 +32,42 @@ public class Manager {
 		return ruleParser;
 	}
 	
+	public ArrayList<String> doPreProcessing(ArrayList<String> text){
+		ArrayList<String> processedTexet = PreProcesing.parseDomainExpressions(text);
+		return PreProcesing.parseArithematicExpressions(processedTexet);
+	}
+	
 	public Collection<TypedDependency> getTypeDependency (String rule){
-		return DependencyParsing.getTypeDependency(rule);
+		return Dependency.getTypeDependency(rule);
 	}
 
-	public HashMap<String, ArrayList<String>> CreateMentionTable(Collection<TypedDependency> td){
+	public HashMap<String, ArrayList<String>> createMentionTable(Collection<TypedDependency> td){
 		
-		return DependencyParsing.CreateMentionTable(td);
+		return Dependency.createMentionTable(td);
 	}
 	
 	public static ArrayList<String> getArraylistOfRelations (Collection<TypedDependency> td){
-		return DependencyParsing.getArraylistOfRelations(td);
+		return Dependency.getArraylistOfRelations(td);
 	}
 	
-	public String getMatchedRuleOfTheMentionId(ArrayList<String> MentionIdRelatedRelations, ArrayList<String> AllRelations){
-		return Match.getMatchedRuleOfTheMentionId(MentionIdRelatedRelations, AllRelations);
+	public String getMatchedRelationsByTypeRules(ArrayList<String> mentionIdRelatedRelations, ArrayList<String> allRelations){
+		return Matching.getMatchedRelationsByTypeRules(mentionIdRelatedRelations, allRelations);
 	}
 	
-	public ArrayList<String> getInputText(String filePath) throws IOException{
+	public ArrayList<String> getAllRelationsMerged(ArrayList<String> tdRelations,
+			ArrayList<String> additionalCondList) {
+		tdRelations.addAll(additionalCondList);
+		return tdRelations;
+	}
+
+	public ArrayList<String> readFile(String filePath) throws IOException{
 		String readString = null;
 		BufferedReader br = null;
 		ArrayList<String> text = new ArrayList<String>();
 		try{
 	    br = new BufferedReader( new FileReader(filePath) ) ;
 	    while((readString = br.readLine())!= null)
-	    	text.add(readString);
+	    	text.add(readString.toLowerCase());
 		}
 		catch(FileNotFoundException e){
 			br.close();
@@ -77,6 +87,11 @@ public class Manager {
 	    pw.close();
 	}
 	
+	public HashMap<String, POS> getPOS(String text){
+		return StanfordPOS.getPOS(text);
+	}
 	
-	
+	public String getStemmer(String word, POS p){
+		return WordNet.getStemmer(word, p);
+	}
 }

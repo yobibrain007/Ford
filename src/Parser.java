@@ -46,10 +46,10 @@ public class Parser {
 		return r;
 	}
 
-	private ArrayList<Predicate> parseLHS(String LHS) {
+	private ArrayList<Predicate> parseLHS(String lHS) {
 		ArrayList<Predicate> parsedConditions = new ArrayList<Predicate>();
 		String []conditions;
-		conditions = LHS.split("&");
+		conditions = lHS.split("&");
 		for(int i = 0; i < conditions.length; i++)
 			parsedConditions.add(parsePredicate(conditions[i]));
 		
