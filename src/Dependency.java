@@ -27,16 +27,23 @@ import edu.stanford.nlp.trees.TreebankLanguagePack;
 import edu.stanford.nlp.trees.TypedDependency;
 import edu.stanford.nlp.util.CoreMap;
 
+/**
+ * This class consists of static methods that operate on Stanford typed dependency 
+ */
 
 public class Dependency {
-
+	/**
+	   * This method is used to getting the typed dependency of a sentence.
+	   * @param text This is the sentence to be processed
+	   * @return Collection<TypedDependency> this return contains the typed dependency "mentions".
+	   */
 	public static Collection<TypedDependency> getTypeDependency(String text){
 		LexicalizedParser lp = LexicalizedParser.loadModel(
 				"edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz",
 				"-maxLength", "80", "-retainTmpSubcategories");
 		TreebankLanguagePack tlp = new PennTreebankLanguagePack();
 		// Uncomment the following line to obtain original Stanford Dependencies
-		// tlp.setGenerateOriginalDependencies(true);
+		//tlp.setGenerateOriginalDependencies(true);
 		GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
 		Tree parse = lp.apply(prepareString(text));
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
@@ -44,54 +51,87 @@ public class Dependency {
 		return tdl;
 	}
 	
+	/**
+	   * This method is used to pars sentence to word set.
+	   * @param text This is the sentence to be processed
+	   * @return List<? extends HasWord> this return contains words.
+	   */
 	private static List<? extends HasWord> prepareString(String text){
 		return SentenceUtils.toWordList(text.split(" "));
 	}
     
+	/**
+	   * This method is used to create mention table from typed dependency.
+	   * the method iterate over the mentions of the type dependency
+	   * make the use of parsePredicate method to get  mentionIds of the mention
+	   * make the use of getMentionIdRelatedMentions method to get all related mentions of each mentionId
+	   * for each mentionId put in the map an entry contains mentionId and its related mentions
+	   * @param td This is the type dependency of a sentence
+	   * @return HashMap<String, ArrayList<String>> this return contains in each entry 
+	   * mentionId as a key and its related mentions as value
+	   */
 	public static HashMap<String, ArrayList<String>> createMentionTable(Collection<TypedDependency> td){
 		
 		HashMap<String, ArrayList<String>> mentionTable = new HashMap<String, ArrayList<String>>();
 		String[] mentionIDs;
 		for (TypedDependency typedDependency : td) {
-			mentionIDs = parsePredicate(typedDependency.toString());
+			mentionIDs = getMentionIds(typedDependency.toString());
 			for(int i=0; i < 2; i++){
 				if(mentionTable.keySet().contains(mentionIDs[i]))
 					continue;
-				mentionTable.put(mentionIDs[i], getMentionIdRelatedRelations(mentionIDs[i], td));
+				mentionTable.put(mentionIDs[i], getMentionIdRelatedMentions(mentionIDs[i], td));
 			}
 		}
 		return mentionTable;
 	}
 	
-	private static ArrayList<String> getMentionIdRelatedRelations(String menId, Collection<TypedDependency> td) {
-		ArrayList<String> relatedRelations = new ArrayList<String>();
+	/**
+	   * This method is used to get all mentions of a specific mentionIDd.
+	   * it iterate over the type dependencies
+	   * if a type dependency contains the mentionId then add it as a related mentions
+	   * @param td This is the type dependency of a sentence
+	   * @return ArrayList<String> this return contains all related mentions.
+	   */
+	private static ArrayList<String> getMentionIdRelatedMentions(String menId, Collection<TypedDependency> td) {
+		ArrayList<String> relatedMentions = new ArrayList<String>();
 		for (TypedDependency typedDependency : td) {
 			if(typedDependency.toString().contains(menId))
-				relatedRelations.add(typedDependency.toString());
+				relatedMentions.add(typedDependency.toString());
 		}
-		return relatedRelations;
+		return relatedMentions;
 	}
 
-	private static String[] parsePredicate(String predicate) {  
+	/**
+	   * This method is used to get mentionIds of a mention.
+	   * it remove any spaces before splitting as a preprocessing filter to return the mentionId only
+	   * isolate mentionIds from the mention
+	   * finally split them
+	   * @param mention This is the mention to be processed
+	   * @return String[] this return contains two mentionIds.
+	   */
+	private static String[] getMentionIds(String mention) {  
 		
+		//the mention pattern is type(mentionId_1,mentionId_2)
 	    String [] terms, arguments;
-	   // String pattern = "(\\s+)|(\\()|([(?=\\?)\\s+,?]+)|(\\))";
-	   // terms = Predicate.split(pattern);
-	    predicate = predicate.replace(" ", "");
-	    terms = predicate.split("\\(");
-
-	    //spit arguments
+	    mention = mention.replace(" ", "");
+	    terms = mention.split("\\(");
 	    terms[1] = terms[1].replace(")","");
+	  //spit arguments
 	    arguments = terms[1].split(",");
 	    
 		return arguments;
 	}
 	
-	public static ArrayList<String> getArraylistOfRelations (Collection<TypedDependency> td){
-		ArrayList<String> relations = new ArrayList<String>();
+	/**
+	   * This method is used to convert typed dependencies of a sentences to arrayList.
+	   * @param td This is the type dependency of a sentence
+	   * @return ArrayList<String> this return contains all mentions as strings.
+	   */
+	public static ArrayList<String> getArraylistOfMetions (Collection<TypedDependency> td){
+		ArrayList<String> mentions = new ArrayList<String>();
 		for (TypedDependency typedDependency : td)
-			relations.add(typedDependency.toString());
-		return relations;
+			mentions.add(typedDependency.toString());
+		return mentions;
 		
 	}
 	

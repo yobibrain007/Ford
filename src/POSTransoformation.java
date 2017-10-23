@@ -2,11 +2,18 @@ import java.util.HashMap;
 
 import edu.mit.jwi.item.POS;
 
+/**
+ * This class consists of static methods for POS data type conversion
+ */
 
 public class POSTransoformation {
 
 	public static HashMap<String, POS> map= new HashMap<String, POS>();
 	
+	/**
+	   * This method is used to initialize map for converting from 
+	   * Stanford POS data type to WordNet POS data type manually
+	   */
 	public static void intialize(){
 		
 		//The POS of the JWI contain (Noun, Verb, Adverb and adjectives only). Therefore, I transformed these parts only 
