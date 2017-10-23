@@ -1,3 +1,1 @@
-If the Status_attribute of the Lower_Desired_Temperature or the Upper_Desired_Temperature equals Invalid , the Regulator_Interface_Failure shall be set to True .
-
-When end system is in ES_FLOOD state and does not receive a coldstart acknowledgement frame between (es_expected_arrival - (es_ca_acceptance_window / 2)) and ( es_expected_arrival + (es_ca_acceptance_window / 2)) after the transmission of a coldstart acknowledgement frame , and no coldstart frame is pending at the end of the interval , it shall transit to ES_UNSYNC state , set local_timer to es_coldstart_timeout , set local_clock to 0 , set local_integration_cycle to 0 , and set local_membership_comp to 0 .
+If the Status_attribute of the Lower_Desired_Temperature or the Upper_Desired_Temperature equals Invalid , the Regulator_Interface_Filure shall be set to True .
