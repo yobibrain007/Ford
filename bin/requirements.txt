@@ -1,1 +1,13 @@
-If the Status_attribute of the Lower_Desired_Temperature or the Upper_Desired_Temperature equals Invalid , the Regulator_Interface_Filure shall be set to True .
+If the Status_attribute of the Lower_Desired_Temperature equals Invalid or the Status_attribute of the Upper_Desired_Temperature equals Invalid , the Regulator_Interface_Filure shall be set to True .
+
+If the Status_attribute of the Lower_Desired_Temperature equals Valid and the Status_attribute of the Upper_Desired_Temperature equals Valid , the Regulator_Interface_Failure shall be set to False .
+
+If the Regulator_Mode equals INIT , the Heat_Control shall be set to zzControl_Offzz .
+
+If the Regulator_Mode equals zzFAILEDzz , the Output_Regulator_Status shall be set to zzFailedzz .
+
+If the Regulator_Mode equals NORMAL , the Output_Regulator_Status shall be set to zzStatus_Onzz .
+
+If the Regulator_Mode equals NORMAL , and the Temp_attribute of the Current_Temperature exceeds the Temp_attribute of the Upper_Desired_Temperature , the Heat_Control shall be set to zzControl_Offzz .
+
+the Regulator_Mode shall be initialized to zzINITzz .
