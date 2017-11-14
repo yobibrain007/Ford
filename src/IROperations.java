@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 public class IROperations{
 
+	private static String root;
 	/**
 	   * This method is used to print IR entries.
 	   * the method print the entry iff it has any other tags regardless stemmer.
@@ -37,11 +38,11 @@ public class IROperations{
 	   */
 	public static HashMap<String, String> executeRelations(ArrayList<String> relations, HashMap<String, String> IR, String mentionId){
 	
-		String arg = "", str, property = "", originalEntry;
+		String arg = "", str, property = "", entity = "", originalEntry;
 		ArrayList<String> tempList;
 		HashMap<String, ArrayList<String>> executedRel = executeRelations(relations);
 		for(Entry<String, ArrayList<String>> e : executedRel.entrySet()){
-			if(!mentionId.contains(e.getKey()))
+			if(!mentionId.equals(e.getKey()))
 				continue;
 			originalEntry = IR.get(mentionId);
 			tempList = e.getValue();
@@ -49,20 +50,37 @@ public class IROperations{
 				str = tempList.get(i);
 				if(originalEntry.contains(str))
 					continue;
-				if(str.contains("="))
-					arg = arg + ", " + str;
+				if(str.contains("entity") || str.contains("unique"))
+					entity = " | " + str + entity;
+				else if(str.contains("="))
+					arg = str + ", " + arg;
 				else
-					property =  " | " + str + property;
+				{
+					if(property.equals(""))
+						property = "|" + str;
+					else
+						property =  property + " | " + str;
+				}
 			}
+			arg = adjustArgs(arg);
 			if(!arg.equals(""))
-				arg = " | " + arg.substring(1, arg.length()-1);
-			IR = adjustIREnrty(mentionId, originalEntry + arg + property, IR);
+				arg = " | " + arg.substring(0, arg.length()-2);
+			IR = adjustIREnrty(mentionId, originalEntry + entity + arg + property, IR);
 			
 			arg = "";
 			property = "";
 		}
 		
 		return IR;
+	}
+
+	private static String adjustArgs(String arg) {
+		int last = arg.lastIndexOf("of=");
+		int start = arg.indexOf("of=");
+		if(last != -1 || last != start)
+			return arg.replace(",", " |");
+		return arg;
+			
 	}
 
 	/**
@@ -98,44 +116,18 @@ public class IROperations{
 		ArrayList<String>parsedItems;
 		String key;
 		for(String rel: relations){
-			parsedItems = parseRelation(rel);
+			parsedItems = Parser.getPredicateTerms(rel);
 			e = executeRelation(parsedItems);
 			//have no thing to do 
 			if(e == null)
 				continue;
-			key = e.getKey();
+			key = e.getKey().replace("ID", "-");
 			if(!output.keySet().contains(key))
-				output.put(e.getKey(), e.getValue());
+				output.put(key, e.getValue());
 			else
 				output.get(key).addAll(e.getValue());
 		}
 		return output;
-	}
-
-	/**
-	   * This method is used to pars relation to terms
-	   * the method remove any spaces then extract the relation name from the relation 
-	   * after that it extract the arguments of the relations
-	   * finally convert the array of terms to array list
-	   * @param rel This is the relations to be parsed
-	   * @return ArrayList<String>  this return contains the relation name at index = 0 followed by the relation arguments
-	   */
-	private static ArrayList<String> parseRelation(String rel) {
-		//the relation pattern relName(arg1,arg2,arg3,..)
-		
-		ArrayList<String> out = new ArrayList<String>();
-		 String [] terms;
-		 rel = rel.replace(" ", "");
-		 terms = rel.split("\\(");
-		 //add relation name
-		 out.add(terms[0]);
-		 //spit arguments
-		 terms[1] = terms[1].replace(")","");
-		 terms = terms[1].split(",");
-		 
-		 for(String s: terms)
-			 out.add(s);
-		return out;
 	}
 
 	/**
@@ -150,6 +142,8 @@ public class IROperations{
 	private static Entry<String, ArrayList<String>> executeRelation(ArrayList<String> parsedTerms) {
 		Entry<String, ArrayList<String>> e;
 		ArrayList<String> arrList = new ArrayList<String>();
+		
+		parsedTerms = adjustMentionId(parsedTerms);
 		switch(parsedTerms.get(0)){
 			case "rel":
 				//rel(const, ?g, ?d) ....    execution ==> const = ?d .... mentionId = ?g
@@ -207,14 +201,29 @@ public class IROperations{
 				arrList.add("["+ parsedTerms.get(1) +"]");
 				e = new AbstractMap.SimpleEntry<String, ArrayList<String>>(parsedTerms.get(2), arrList);
 				break;
-			case "attr":
-				//attr(?g,?d) I have no Idea how to transfer
 			case "top":
 				//do no thing
+				//top(?d) ....  
+				root = parsedTerms.get(1);
+			case "attr":
+				//attr(?g,?d) I have no Idea how to transfer
 			default:
 				e = null;
 				break;
 		}
 		return  e;
+	}
+
+	private static ArrayList<String> adjustMentionId(
+			ArrayList<String> parsedTerms) {
+		ArrayList<String> out = new ArrayList<String>();
+		for (String s : parsedTerms) {
+			out.add(Parser.reAdjustMentionIdPosition(s));
+		}
+		return out;
+	}
+
+	public static String getRoot(HashMap<String, String> iR) {
+		return root;
 	}
 }

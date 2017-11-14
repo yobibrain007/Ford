@@ -43,7 +43,7 @@ public class Dependency {
 				"-maxLength", "80", "-retainTmpSubcategories");
 		TreebankLanguagePack tlp = new PennTreebankLanguagePack();
 		// Uncomment the following line to obtain original Stanford Dependencies
-		//tlp.setGenerateOriginalDependencies(true);
+		// tlp.setGenerateOriginalDependencies(true);
 		GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
 		Tree parse = lp.apply(prepareString(text));
 		GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
@@ -73,13 +73,13 @@ public class Dependency {
 	public static HashMap<String, ArrayList<String>> createMentionTable(Collection<TypedDependency> td){
 		
 		HashMap<String, ArrayList<String>> mentionTable = new HashMap<String, ArrayList<String>>();
-		String[] mentionIDs;
+		 ArrayList<String> mentionIDs;
 		for (TypedDependency typedDependency : td) {
 			mentionIDs = getMentionIds(typedDependency.toString());
-			for(int i=0; i < 2; i++){
-				if(mentionTable.keySet().contains(mentionIDs[i]))
+			for(String id: mentionIDs){
+				if(mentionTable.keySet().contains(id))
 					continue;
-				mentionTable.put(mentionIDs[i], getMentionIdRelatedMentions(mentionIDs[i], td));
+				mentionTable.put(id, getMentionIdRelatedMentions(id, td));
 			}
 		}
 		return mentionTable;
@@ -109,17 +109,11 @@ public class Dependency {
 	   * @param mention This is the mention to be processed
 	   * @return String[] this return contains two mentionIds.
 	   */
-	private static String[] getMentionIds(String mention) {  
+	private static ArrayList<String> getMentionIds(String mention) {  
 		
-		//the mention pattern is type(mentionId_1,mentionId_2)
-	    String [] terms, arguments;
-	    mention = mention.replace(" ", "");
-	    terms = mention.split("\\(");
-	    terms[1] = terms[1].replace(")","");
-	  //spit arguments
-	    arguments = terms[1].split(",");
-	    
-		return arguments;
+	    ArrayList<String> arguments = Parser.getPredicateTerms(mention);
+	    arguments.remove(0);
+	    return arguments;
 	}
 	
 	/**

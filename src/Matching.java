@@ -14,6 +14,7 @@ import org.jpl7.Term;
 
 public class Matching {
 
+	public static final String CONSTANT_TYPERULE_VALUS = "is than less greater at least most when once if until always eventually never any all some a an the";
 	/**
 	   * This method is used to initialize Prolog Environment
 	   * by loading the prolog file
@@ -99,18 +100,33 @@ public class Matching {
 	   * @return String this return contains the adjusted mention
 	   */
 	private static String adjustMention(String mention) {
-		String temp;
-		int firstDashIndex, lastDashindex, commaIndex;
+		String adjustedMention;
+		//int firstDashIndex, lastDashindex, commaIndex;
 		
 		if(mention.contains("event") || mention.contains("entity") || mention.contains("pred"))
 			return mention;
 		
-		firstDashIndex = mention.indexOf("-");
+		/*firstDashIndex = mention.indexOf("-");
 		lastDashindex = mention.lastIndexOf("-");
 		commaIndex = mention.indexOf(",");
-		temp = mention.substring(0, firstDashIndex) + mention.substring(commaIndex, lastDashindex) +")";
-		temp = adjustMentionNameManually(temp);
-		return temp;
+		temp = mention.substring(0, firstDashIndex) + mention.substring(commaIndex, lastDashindex) +")";*/
+		
+		adjustedMention = adjustConstArg(mention);
+		adjustedMention = adjustMentionNameManually(adjustedMention);
+		return adjustedMention;
+	}
+
+	private static String adjustConstArg(String mention) {
+		String arg,argWithoutPos;
+		ArrayList<String> items = Parser.getPredicateTerms(mention);
+		for(int i =1; i<3; i++){
+			arg = items.get(i);
+			argWithoutPos = arg.substring(0, arg.indexOf("-"));
+			if(CONSTANT_TYPERULE_VALUS.contains(argWithoutPos) )
+				mention = mention.replace(arg, argWithoutPos);
+		}
+		mention = Parser.adjustMentionIdPosition(mention);
+		return mention;
 	}
 
 	/**
@@ -123,8 +139,10 @@ public class Matching {
 	private static String adjustMentionNameManually(String mention) {
 		mention = mention.replace(":", "_");
 		mention = mention.replace("nmod_of(", "prep_of(");
+		mention = mention.replace("nmod_to(", "prep_to(");
 		mention = mention.replace("advcl_if(","advcl(");
 		mention = mention.replace("advcl_to(","prep_to(");
+	//	mention = mention.replace("xcomp(","prep_to(");
 		mention = mention.replace("if)", "if_)");
 		mention = mention.replace("root(","roott(");
 		return mention;

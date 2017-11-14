@@ -18,38 +18,14 @@ import edu.stanford.nlp.trees.TypedDependency;
  */
 
 public class Manager {
-
-	private ArrayList<Rule> parsedRules;
 	
-	
-	/**
-	   * This method is used to initialize all the needed Environments 
-	   * (e.g., WordNEt, Prolog, Stanford and Ontology)
-	   */
-	public Manager() throws IOException{
-		Matching.intialize();
-		WordNet.intialize();
-		POSTransoformation.intialize();
-		StanfordPOS.intialize();
-		Ontology.intialize();
-	}
-	
-	/**
-	   * This method is used to parse Strings contains rules to objects of Rule.
-	   * @param plainRules This is the rule set of type String to be processed
-	   * @return ArrayList<Rule> this return contains the Rules that are parsed.
-	   */
-	public ArrayList<Rule> parseRules(ArrayList<String> plainRules){
-		parsedRules = Parser.Parse(plainRules);
-		return parsedRules;
-	}
 	
 	/**
 	   * This method is used to parse arithmetic expressions as well as domain expressions. 
 	   * @param requirements this is the requirement set to be processed
 	   * @return ArrayList<String> this return contains the requirement set after processing
 	   */
-	public ArrayList<String> doPreProcessing(ArrayList<String> requirements){
+	public static ArrayList<String> doPreProcessing(ArrayList<String> requirements){
 		ArrayList<String> processedRequirements = PreProcesing.parseDomainExpressions(requirements);
 		return PreProcesing.parseArithematicExpressions(processedRequirements);
 	}
@@ -59,7 +35,7 @@ public class Manager {
 	   * @param req This is the sentence to be processed
 	   * @return Collection<TypedDependency> this return contains the typed dependency "mentions".
 	   */
-	public Collection<TypedDependency> getTypeDependency (String req){
+	public static Collection<TypedDependency> getTypeDependency (String req){
 		return Dependency.getTypeDependency(req);
 	}
 
@@ -69,7 +45,7 @@ public class Manager {
 	   * @return HashMap<String, ArrayList<String>> this return contains in each entry 
 	   * mentionId as a key and its related mentions as value
 	   */
-	public HashMap<String, ArrayList<String>> createMentionTable(Collection<TypedDependency> td){
+	public static HashMap<String, ArrayList<String>> createMentionTable(Collection<TypedDependency> td){
 		
 		return Dependency.createMentionTable(td);
 	}
@@ -89,7 +65,7 @@ public class Manager {
 	   * @param allMentions This is the mentions of the whole sentence
 	   * @return ArrayList<String> this return contains the matched relations by the type rules
 	   */
-	public ArrayList<String> getMatchedRelationsByTypeRules(ArrayList<String> mentionIdRelatedRelations, ArrayList<String> allRelations){
+	public static ArrayList<String> getMatchedRelationsByTypeRules(ArrayList<String> mentionIdRelatedRelations, ArrayList<String> allRelations){
 		return Matching.getMatchedRelationsByTypeRules(mentionIdRelatedRelations, allRelations);
 	}
 	
@@ -99,49 +75,13 @@ public class Manager {
 	   * @param list_2 This is the second list to be merged
 	   * @return ArrayList<String> this return contains the read lines.
 	   */
-	public ArrayList<String> getAllMentionsMerged(ArrayList<String> list_1,
+	public static ArrayList<String> getAllMentionsMerged(ArrayList<String> list_1,
 			ArrayList<String> list_2) {
 		list_1.addAll(list_2);
 		return list_1;
 	}
 
-	/**
-	   * This method is used to read lines of file and store it in ArrayLis of strings.
-	   * @param filePath This is the file path of the file to be read.
-	   * @return ArrayList<String> this return contains the read lines.
-	   */
-	public ArrayList<String> readFile(String filePath) throws IOException{
-		String readString = null;
-		BufferedReader br = null;
-		ArrayList<String> text = new ArrayList<String>();
-		try{
-	    br = new BufferedReader( new FileReader(filePath) ) ;
-	    while((readString = br.readLine())!= null)
-	    	text.add(readString.toLowerCase());
-		}
-		catch(FileNotFoundException e){
-			br.close();
-			return null;
-		}
-	    br.close();
-		return text;
-	}
 	
-	/**
-	   * This method is used to write strings to file.
-	   * @param filePath This is the file path of the file to be read.
-	   * @param l This is the list of strings that would be written
-	   * @return ArrayList<String> this return contains the read lines.
-	   */
-	public void writeToFile(String filePath, ArrayList<String> l) throws IOException{
-		
-		PrintWriter pw = null;
-		
-		pw = new PrintWriter ( new BufferedWriter ( new FileWriter(filePath) )) ;
-		for(int i = 0; i < l.size(); i++)
-				pw.println(l.get(i));
-	    pw.close();
-	}
 	
 	/**
 	   * This method is used to getting the POS of a sentence.
@@ -149,7 +89,7 @@ public class Manager {
 	   * @return HashMap this return contains in each entry a word of the sentences as a key
 	   * accompanied by its POS as entry.
 	   */
-	public HashMap<String, POS> getPOS(String text){
+	public static HashMap<String, POS> getPOS(String text){
 		return StanfordPOS.getPOS(text);
 	}
 	
@@ -159,7 +99,7 @@ public class Manager {
 	   * @param p This is the tagger of the word (e.g. noun, verb, adj and adv) 
 	   * @return String this return contains the word stemmer if it exited.
 	   */
-	public String getStemmer(String word, POS p){
+	public static String getStemmer(String word, POS p){
 		return WordNet.getStemmer(word, p);
 	}
 	
@@ -179,6 +119,10 @@ public class Manager {
 	   */
 	public static void printIR(HashMap<String, String> IR){
 		IROperations.printIR(IR);
+	}
+
+	public static String getIRRoot(HashMap<String, String> IR) {
+		return IROperations.getRoot(IR);
 	}
 
 }

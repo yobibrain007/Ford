@@ -16,9 +16,16 @@ public class Ontology {
 	public static void intialize(){
 		map = new HashMap<String, String>();
 		map.put("equals", "predicate");
+		map.put("exceeds", "predicate");
+		map.put("exceeded", "predicate");
 		map.put("true", "bool");
 		map.put("false", "bool");
 		map.put("invalid", "uniqe entity");
+		map.put("valid", "uniqe entity");
+		map.put("INIT", "uniqe entity");
+		map.put("normal", "uniqe entity");
+		map.put("reset", "uniqe entity");
+		map.put("control_off", "uniqe entity");
 	}
 	
 	/**

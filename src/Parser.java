@@ -22,7 +22,7 @@ public class Parser {
 		for (String rule : flattenRules) {
 			if(rule.contains("%")|| rule.equals(""))
 				continue;
-			filteredRule = filterRule(rule);
+			filteredRule = filterSpaces(rule);
 			r = parseRule(filteredRule);
 			ruleSet.add(r);
 		}
@@ -35,7 +35,7 @@ public class Parser {
 	   * @param text This is the string to be processed
 	   * @return String this return contains the filtered string.
 	   */
-	private static String filterRule(String text) {
+	public static String filterSpaces(String text) {
 		return text.replace(" ", "");
 	}
 
@@ -111,7 +111,7 @@ public class Parser {
 	public static ArrayList<String> getPredicateTerms(String predicate){
 		 String [] arguments;
 		 ArrayList<String> terms = new ArrayList<String>();
-		 predicate = filterRule(predicate);
+		 predicate = filterSpaces(predicate);
 		 arguments = predicate.split("\\(");
 		 
 		 terms.add(arguments[0]);
@@ -125,6 +125,14 @@ public class Parser {
 		 return terms;
 	}
 
+	public static String adjustMentionIdPosition(String mention){
+		mention = mention.replace("-", "ID");
+		return mention;
+	}
 	
+	public static String reAdjustMentionIdPosition(String mention){
+		mention = mention.replace("ID", "-");
+		return mention;
+	}
 	
 }
