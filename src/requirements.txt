@@ -1,3 +1,31 @@
+The S_and_T_module SHALL be able to launch the SFI_local_S_and_T_application as a separator.
+
+The S_and_T_module SHALL PROVIDE the system_administrator WITH THE ABILITY TO monitor system_configuration changes posted to the database .
+
+the S_and_T_module shall command the database to send the orbit configuration files to the satellite control centre .
+
+the S_and_T_module should supply an SOT oeprator role for monitoring purposes only .
+
+the S_and_T_module shall periodically poll the database for EDTM CIS information .
+
+the S_and_T_module shall present the operator with visual notifications in case an alarm arises in the ground station or the satellite control centre .
+
+as soon as the virtual notifications is presented, the sot operator shall restart the local S_and_T_module .
+
+the S_and_T_module shall notify the database when a reported anomaly is fixed and it is closed .
+
+the S_and_T_module shall write the polled CSM accompanied by a time_stamp and ground station id data into the database .
+
+the S_and_T_module shall poll UGS status data using SMP interface .
+
+the S_and_T_module shall keep track of the latest configuration files sent to the satellite control centre and ground station .
+
+the S_and_T_module shall time out if there is no connection to the ground station components and local S_and_T_module .
+
+the S_and_T_module shall supply the control mode information to the SOT operator .
+
+the S_and_T_module shall provide the system administrator with the ability to test the SMP interface under maintenance .
+
 If the Status_attribute of the Lower_Desired_Temperature equals Invalid or the Status_attribute of the Upper_Desired_Temperature equals Invalid , the Regulator_Interface_Filure shall be set to True .
 
 If the Status_attribute of the Lower_Desired_Temperature equals Valid and the Status_attribute of the Upper_Desired_Temperature equals Valid , the Regulator_Interface_Failure shall be set to False .
@@ -8,6 +36,7 @@ If the Regulator_Mode equals zzFAILEDzz , the Output_Regulator_Status shall be s
 
 If the Regulator_Mode equals NORMAL , the Output_Regulator_Status shall be set to zzStatus_Onzz .
 
-If the Regulator_Mode equals NORMAL , and the Temp_attribute of the Current_Temperature exceeds the Temp_attribute of the Upper_Desired_Temperature , the Heat_Control shall be set to zzControl_Offzz .
+If the Regulator_Mode equals NORMAL and the Temp_attribute of the Current_Temperature exceeds the Temp_attribute of the Upper_Desired_Temperature , the Heat_Control shall be set to zzControl_Offzz .
 
 the Regulator_Mode shall be initialized to zzINITzz .
+

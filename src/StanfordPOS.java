@@ -1,4 +1,5 @@
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -8,6 +9,8 @@ import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.TextAnnotation;
+import edu.stanford.nlp.ling.tokensregex.TokenSequenceMatcher;
+import edu.stanford.nlp.ling.tokensregex.TokenSequencePattern;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
@@ -76,6 +79,34 @@ public class StanfordPOS {
  		    	posMap.put(word, POSTransoformation.map.get(pos));
      }
 		return posMap;
+	}
+	
+	public static String matchSeqOfPOS(String text, ArrayList<String> rules, String constVal){
+		String output = "", tt = "";
+		if(text.equals(""))
+			return output;
+		Annotation annotation = stanfordCNLP.process(text);
+		List<CoreMap> sentences = annotation.get(CoreAnnotations.SentencesAnnotation.class);
+		
+		List<CoreLabel> tokens = sentences.get(0).get(CoreAnnotations.TokensAnnotation.class);
+		
+		for (CoreLabel token: tokens)
+			tt = tt + token.get(PartOfSpeechAnnotation.class) + " ";
+		
+		TokenSequenceMatcher matcher;
+		TokenSequencePattern pattern;
+		for (String rule : rules) {
+			pattern = TokenSequencePattern.compile(constVal + rule);
+			matcher = pattern.getMatcher(tokens);
+			String  pos = tokens.get(0).get(PartOfSpeechAnnotation.class);
+			if (matcher.find()){
+	        	output = matcher.group();
+	        	break;
+			}
+		}
+		
+		//return output.substring(0, output.length() - 1);
+		return output;
 	}
 
 }

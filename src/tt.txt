@@ -1,0 +1,2 @@
+the ball of the rocket shall be initialized to zzINITzz .
+If the Status_attribute of the Lower_Desired_Temperature or the Upper_Desired_Temperature equals Invalid , the Regulator_Interface_Failure shall be set to True .

@@ -26,6 +26,7 @@ public class Controller {
 		POSTransoformation.intialize();
 		StanfordPOS.intialize();
 		Ontology.intialize();
+		GrammerMatching.intialize();
 	}
 	
 	/**
