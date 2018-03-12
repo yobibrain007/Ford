@@ -1,0 +1,61 @@
+faa : CONTEXT =
+BEGIN
+  main : MODULE =
+  BEGIN
+    DEFINITION
+      alarm_control IN {Z :null | 
+(monitor_mode=init  =>  Z=control_off) AND 
+((monitor_mode=normal and (lower_alarm_temperature.temp_attribute>current_temperature.temp_attribute or current_temperature.temp_attribute>upper_alarm_temperature.temp_attribute) and current_temperature.temp_attribute>upper_alarm_temperature.temp_attribute)  =>  Z=control_on)};
+      monitor_init_timeout IN {Z :null | 
+(monitor_status=true  =>  Z=false) AND 
+(monitor_status=false  =>  Z=true)};
+      regulator_status IN {Z :null | 
+((regulator_internal_failure=false and current_temperature.status_attribute=valid and regulator_interface_failure=false)  =>  Z=true) AND 
+((regulator_internal_failure=true or not (current_temperature.status_attribute=valid) or regulator_interface_failure=true)  =>  Z=false)};
+      regulator_interface_failure IN {Z :null | 
+((upper_desired_temperature.status_attribute=invalid or lower_desired_temperature.status_attribute=invalid)  =>  Z=true) AND 
+((upper_desired_temperature.status_attribute=valid and lower_desired_temperature.status_attribute=valid)  =>  Z=false)};
+      output_monitor_status IN {Z :null | 
+(manage_monitor_interface_mode=init  =>  Z=init) AND 
+(manage_monitor_interface_mode=normal  =>  Z=status_on) AND 
+(manage_monitor_interface_mode=failed  =>  Z=failed)};
+      monitor_interface_failure IN {Z :null | 
+((upper_alarm_temperature.status_attribute=invalid or lower_alarm_temperature.status_attribute=invalid)  =>  Z=true) AND 
+((upper_alarm_temperature.status_attribute=valid and lower_alarm_temperature.status_attribute=valid)  =>  Z=false)};
+      regulator_init_timeout IN {Z :null | 
+(regulator_status=true  =>  Z=false) AND 
+(regulator_status=false  =>  Z=true)};
+      heat_control IN {Z :null | 
+(regulator_mode=init  =>  Z=control_off) AND 
+((regulator_mode=normal and lower_desired_temperature.temp_attribute>current_temperature.temp_attribute)  =>  Z=control_on) AND 
+((regulator_mode=normal and current_temperature.temp_attribute>upper_desired_temperature.temp_attribute)  =>  Z=control_off) AND 
+(regulator_mode=failed  =>  Z=control_off)};
+      output_regulator_status IN {Z :null | 
+(regulator_mode=init  =>  Z=init) AND 
+(regulator_mode=normal  =>  Z=status_on) AND 
+(regulator_mode=failed  =>  Z=failed)};
+      monitor_status IN {Z :null | 
+((monitor_internal_failure=false and current_temperature.status_attribute=valid and monitor_interface_failure=false)  =>  Z=true) AND 
+((monitor_internal_failure=true or not (current_temperature.status_attribute=valid) or monitor_interface_failure=true)  =>  Z=false)};
+    INITIALIZATION
+      monitor_mode=init;
+      manage_monitor_interface_mode=monitor_mode;
+  TRANSITION
+      [
+        ((regulator_mode=init and regulator_status=true) --> regulator_mode=normal)
+ [] 
+((regulator_mode=normal and regulator_status=false) --> regulator_mode=failed)
+ [] 
+((regulator_mode=init and regulator_init_timeout=true) --> regulator_mode=failed)
+ [] 
+(reset=true --> regulator_mode=init)
+        ((monitor_mode=init and monitor_status=true) --> monitor_mode=normal)
+ [] 
+((monitor_mode=normal and monitor_status=false) --> monitor_mode=failed)
+ [] 
+((monitor_mode=init and monitor_init_timeout=true) --> monitor_mode=failed)
+        []
+        ELSE -->
+      ]
+  END;
+END

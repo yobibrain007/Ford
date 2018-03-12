@@ -13,6 +13,11 @@ public class SALTransformation {
 	public static enum ExecutionType {e, NMOD, NEG, G, F, NEV, UNT, AND, OR, IMP, EQ, EXC, DOM, ATOM,
 		SET, SET1, CLR, INIT, SEND, TRAN, REC, IN, BOOL, NUM, DOT, VALUE, ARITH}
 
+	private static HashMap<String, String> definedVariables = new HashMap<String, String>();
+	
+	private static HashMap<String, String> definition = new HashMap<String, String>();
+	private static HashMap<String, String> intialization = new HashMap<String, String>();
+	private static HashMap<String, String> transition = new HashMap<String, String>();
 	
 	public static String transformFunction(String text, HashMap<String, String> IR){
 		
@@ -295,4 +300,137 @@ public class SALTransformation {
 		return values;
 	}
 	
+	public static ArrayList<String> generateSALModel(ArrayList<String> statVars, ArrayList<String> modelRules){
+		ArrayList<String> model;
+		
+		isolateModelRuls(statVars, modelRules);
+		model = prepareSALModel();
+		return model;
 	}
+
+	private static void isolateModelRuls(ArrayList<String> statVars, ArrayList<String> modelRules) {
+		for (String r : modelRules) 
+			assignRule(r, statVars);
+		
+	}
+
+	private static void assignRule(String r, ArrayList<String> statVars) {
+		String[] ruleSides;
+		String ctlVar;
+		
+		ruleSides = r.split("=>");
+		if(ruleSides.length == 1)
+		{
+			ruleSides = r.split("=");
+			ctlVar = ruleSides[1].replace(" ", "");
+			if(definedVariables.keySet().contains(ctlVar))
+				addToDefinition(ctlVar, "", r, definedVariables.get(ctlVar));
+			else
+				addToIntialization(ctlVar, r);
+		}
+		else{
+			ctlVar = ruleSides[1].split("=")[0].replace(" ", "");
+			if(statVars.contains(ctlVar))
+				addToTransition(ctlVar, r);
+			else
+				addToDefinition(ctlVar, ruleSides[0], ruleSides[1],definedVariables.get(ctlVar));
+		}
+		
+	}
+
+	private static void addToIntialization(String ctlVar, String r) {
+		intialization.put(ctlVar, r);
+	}
+
+	private static void addToDefinition(String ctlVar, String lHS, String rHS, String type) {
+		String oldVal, newVal;
+		newVal = lHS + " => " + rHS.replace(ctlVar, "Z");
+		if(definition.keySet().contains(ctlVar)){
+			oldVal = definition.get(ctlVar);
+			definition.replace(ctlVar, oldVal, oldVal + " AND " + System.getProperty("line.separator") + newVal);
+		}
+		else
+			definition.put(ctlVar, "IN {Z :" + type + " | " + System.getProperty("line.separator") + newVal);
+	}
+
+	private static void addToTransition(String ctlVar, String val) {
+		
+		String oldVal, newVal;
+		newVal = val.replace("=>", "-->");
+		if(transition.keySet().contains(ctlVar)){
+			oldVal = transition.get(ctlVar);
+			transition.replace(ctlVar, oldVal, oldVal + System.getProperty("line.separator") + " [] " + System.getProperty("line.separator") + newVal);
+		}
+		else 
+			transition.put(ctlVar, newVal);
+	}
+	
+	private static ArrayList<String> prepareSALModel() {
+		ArrayList<String> model =  new ArrayList<String>();
+		
+		model.add("faa : CONTEXT =");
+		model.add("BEGIN");
+		
+	//	model.addAll(addDefinedTypes("  "));
+		
+		model.add("  main : MODULE =");
+		model.add("  BEGIN");
+		
+	//	model.addAll(addDefinedVars("    "));
+		
+		model.add("    DEFINITION");
+		
+		model.addAll(addDefinitions("      "));
+		
+		model.add("    INITIALIZATION");
+		
+		model.addAll(addIntitialization("      "));
+		
+		model.add("  TRANSITION");
+		
+		model.addAll(addTransition("        "));
+		
+		model.add("  END;");
+		
+	//	model.addAll(addTheorem("  theorem"));
+		
+		model.add("END");
+		
+		return model;
+	}
+
+
+	private static ArrayList<String> addDefinitions(String spaces) {
+		ArrayList<String> _definition =  new ArrayList<String>();
+		
+		for (Entry<String, String> e : definition.entrySet())
+			_definition.add(spaces + e.getKey() + " " +  e.getValue() + "};");
+		
+		return _definition;
+	}
+
+	private static ArrayList<String> addIntitialization(String spaces) {
+		ArrayList<String> _intialization =  new ArrayList<String>();
+		
+		for (String s : intialization.values())
+			_intialization.add(spaces + s + ";");
+		
+		return _intialization;
+	}
+
+	private static ArrayList<String> addTransition(String spaces) {
+		
+		ArrayList<String> _transition =  new ArrayList<String>();
+		_transition.add("      [");
+		
+		for (String s : transition.values())
+			_transition.add(spaces + s);
+
+		_transition.add(spaces + "[]");
+		_transition.add(spaces + "ELSE -->");
+		_transition.add("      ]");	
+		
+		return _transition;
+	}
+
+}

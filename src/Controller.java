@@ -169,6 +169,15 @@ public class Controller {
 		return IR;
 	}
 	
+	public ArrayList<String> generateSALModel(ArrayList<String> transformedSALRules, ArrayList<String> statVars){
+		
+		ArrayList<String> model;
+		
+		model = SALTransformation.generateSALModel(statVars, transformedSALRules);
+		
+		return model;
+	}
+	
 	/**
 	   * This method is used to print IR entries.
 	   * @param IR This is the word to be processed.

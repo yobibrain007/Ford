@@ -53,6 +53,8 @@ import edu.stanford.nlp.ling.SentenceUtils;
 public class SystemMain {
 
 	static final String REQ_FILE_PATH = "src/requirements.txt";
+	static final String SAL_MODEL_FILE_PATH = "src/SALModel.txt";
+	static final String STATE_VARIABLES_FILE_PATH = "src/statVars.txt";
 
 	public static void main(String[] args) throws IOException{
 		
@@ -96,5 +98,12 @@ public class SystemMain {
 			
 		}
 		
+		transformedSALRules = ctl.readFile("src/temp.txt");
+		ArrayList<String> statVars = ctl.readFile(STATE_VARIABLES_FILE_PATH);
+		
+		ArrayList<String> model = ctl.generateSALModel(transformedSALRules, statVars);
+		ctl.writeToFile(SAL_MODEL_FILE_PATH, model);
+		
+		System.out.println("SAL model is constructed");
 	}
 }
