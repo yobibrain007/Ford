@@ -66,7 +66,7 @@ public class Controller {
 		
 		//step:1
 		tdl = Manager.getTypeDependency(requirement);
-		//System.out.println(tdl);
+		System.out.println(tdl);
 			
 		//step:2
 		//creating up Mention Table

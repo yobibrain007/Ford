@@ -40,3 +40,5 @@ If the Regulator_Mode equals NORMAL and the Temp_attribute of the Current_Temper
 
 the Regulator_Mode shall be initialized to zzINITzz .
 
+If the Monitor_Mode is set to zzINITzz and the Monitor_Init_Timeout is set to True , the Monitor_Mode shall be set to zzFAILEDzz .
+

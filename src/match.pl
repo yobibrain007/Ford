@@ -2,6 +2,7 @@ rule(0,  [roott(_g,_d)], top(_d)).
 rule(1,  [nsubj(_larger,_smaller),cop(_larger,is),advmod(_larger,than),advmod(than,less)], rel(greater_than,_larger,_smaller)).
 rule(2,  [nsubj(_larger,_smaller),cop(_larger,is),advmod(_larger,than),dep(than,greater)], rel(less_than,_larger,_smaller)).
 rule(3,  [nsubj(_larger,_smaller),cop(_larger,is),advmod(_larger,at),pobj(at,least)], rel(less_than_or_equal,_larger,_smaller)).
+rule(267,  [case(_larger, than), nsubj(less, _smaller), cop(less, is)], rel(less_than_or_equal,_larger,_smaller)).
 rule(4,  [nsubj(_larger,_smaller),cop(_larger,is),advmod(_larger,at),pobj(at,most)], rel(greater_than_or_equal,_larger,_smaller)).
 rule(5,  [prep_upon(_g,_d)], implies(_d,_g)).
 rule(6,  [prepc_upon(_g,_d)], implies(_d,_g)).
@@ -265,6 +266,7 @@ rule(263,  [prep_up_to(_g,_d)], rel(up_to,_g,_d)).
 rule(264,  [prepc_up_to(_g,_d)], rel(up_to,_g,_d)).
 rule(265,  [prep_where_as(_g,_d)], rel(where_as,_g,_d)).
 rule(266,  [prepc_where_as(_g,_d)], rel(where_as,_g,_d)).
+
 
 
 subset([] , _).

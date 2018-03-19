@@ -10,7 +10,7 @@ import org.jpl7.fli.predicate_t;
 
 public class SALTransformation {
 	
-	public static enum ExecutionType {e, NMOD, NEG, G, F, NEV, UNT, AND, OR, IMP, EQ, EXC, DOM, ATOM,
+	public static enum ExecutionType {e, NMOD, NEG, G, F, NEV, UNT, AND, OR, IMP, EQ, EXC, LT, DOM, ATOM,
 		SET, SET1, CLR, INIT, SEND, TRAN, REC, IN, BOOL, NUM, DOT, VALUE, ARITH}
 
 	private static HashMap<String, String> definedVariables = new HashMap<String, String>();
@@ -76,10 +76,12 @@ public class SALTransformation {
 		else if(nxtExcPart.contains("impliedby:"))
 			type = ExecutionType.IMP;
 		
-		else if(restOfText.contains("equal") && nxtExcPart.contains("arg1"))
-			type = ExecutionType.EQ;
 		else if(restOfText.contains("exceed") && nxtExcPart.contains("arg1"))
 			type = ExecutionType.EXC;
+		else if(restOfText.contains("is_less_than_or_equal")&& nxtExcPart.contains("arg1"))
+			type = ExecutionType.LT;
+		else if(restOfText.contains("equal") && nxtExcPart.contains("arg1"))
+			type = ExecutionType.EQ;
 		else if(restOfText.contains("dominate") && nxtExcPart.contains("arg1"))
 			type = ExecutionType.DOM;
 		
@@ -186,6 +188,11 @@ public class SALTransformation {
 				executionOut = transformFunction(values[0], IR) + ">" + transformFunction(values[1], IR);
 				break;
 			
+			case LT:
+				values = getValues(crrExcPart, "arg1=", "arg2=");
+				executionOut = transformFunction(values[0], IR) + "<=" + transformFunction(values[1], IR);
+				break;
+				
 			case DOM:
 				values = getValues(crrExcPart, "arg1=", "arg2=");
 				executionOut = transformFunction(values[0], IR) + ">=" + transformFunction(values[1], IR);

@@ -15,8 +15,9 @@ public class ArsenalTemplate extends RequirementTemplate {
 	private void intializeCondVerbs(){
 		ARSENAL_CONDITION_VERBS.add("equals");
 		ARSENAL_CONDITION_VERBS.add("exceeds");
+		ARSENAL_CONDITION_VERBS.add("does not exceed");
 		ARSENAL_CONDITION_VERBS.add("is greater than");
-		ARSENAL_CONDITION_VERBS.add("is less than");
+		ARSENAL_CONDITION_VERBS.add("is_less_than_or_equal");
 		ARSENAL_CONDITION_VERBS.add("is set to");
 		ARSENAL_CONDITION_VERBS.add("is not set to");
 	}
