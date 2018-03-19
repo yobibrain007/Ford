@@ -1,0 +1,16 @@
+faa : CONTEXT =
+BEGIN
+  main : MODULE =
+  BEGIN
+    DEFINITION
+      yvcifbard_b_bpedstat IN {Z :null | 
+(brake_torque>engine_drag_torque  =>  Z=pressed) AND 
+(brake_torque<=engine_drag_torque  =>  Z=released)};
+    INITIALIZATION
+  TRANSITION
+      [
+        []
+        ELSE -->
+      ]
+  END;
+END
