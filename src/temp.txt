@@ -31,4 +31,6 @@ Monitor_Mode=INIT
 ((Monitor_Mode=INIT AND Monitor_Init_Timeout=TRUE) => Monitor_Mode=FAILED)
 (Monitor_Status=TRUE => Monitor_Init_Timeout=FALSE)
 (Monitor_Status=FALSE => Monitor_Init_Timeout=TRUE)
+(Regulator_Mode=FAILED => NOT (F (Regulator_Mode=NORMAL)))
+(Monitor_Mode=FAILED => NOT (F (Monitor_Mode=NORMAL)))
 (Reset=TRUE => Regulator_Mode=INIT)

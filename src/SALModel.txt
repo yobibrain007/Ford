@@ -1,16 +1,71 @@
 faa : CONTEXT =
 BEGIN
+  type6 : TYPE = {valid};
+  type7 : TYPE = [# status_attribute : type6 #];
+  type4 : TYPE = {init,normal,failed};
+  type2 : TYPE = {control_off};
+  type0 : TYPE = {init,statu_on,failed};
   main : MODULE =
   BEGIN
+    regulator_status : BOOLEAN
+    output_monitor_status : type0
+    regulator_internal_failure : BOOLEAN
+    heat_control : type2
+    monitor_status : BOOLEAN
+    mode : type4
+    current_temperature : type7
+    regulator_mode : type4
+    alarm_control : type2
+    monitor_internal_failure : BOOLEAN
+    monitor_init_timeout : BOOLEAN
+    regulator_interface_failure : BOOLEAN
+    monitor_mode : type4
+    monitor_interface_failure : BOOLEAN
+    regulator_init_timeout : BOOLEAN
+    output_regulator_status : type0
     DEFINITION
-      yvcifbard_b_bpedstat IN {Z :null | 
-(brake_torque>engine_drag_torque  =>  Z=pressed) AND 
-(brake_torque<=engine_drag_torque  =>  Z=released)};
+      alarm_control IN {Z :type2 | 
+(monitor_mode=init  =>  Z=control_off)};
+      monitor_init_timeout IN {Z :BOOLEAN | 
+(monitor_status=true  =>  Z=false) AND 
+(monitor_status=false  =>  Z=true)};
+      regulator_status IN {Z :BOOLEAN | 
+(((regulator_interface_failure=true OR NOT( current_temperature.status_attribute=valid )) OR (regulator_internal_failure=true OR NOT( current_temperature.status_attribute=valid )))  =>  Z=false)};
+      output_monitor_status IN {Z :type0 | 
+(mode=init  =>  Z=init) AND 
+(mode=normal  =>  Z=statu_on) AND 
+(mode=failed  =>  Z=failed)};
+      monitor_mode IN {Z :type4 | 
+ => mode=Z};
+      regulator_init_timeout IN {Z :BOOLEAN | 
+(regulator_status=true  =>  Z=false) AND 
+(regulator_status=false  =>  Z=true)};
+      heat_control IN {Z :type2 | 
+(regulator_mode=init  =>  Z=control_off) AND 
+(regulator_mode=failed  =>  Z=control_off)};
+      output_regulator_status IN {Z :type0 | 
+(regulator_mode=init  =>  Z=init) AND 
+(regulator_mode=normal  =>  Z=statu_on) AND 
+(regulator_mode=failed  =>  Z=failed)};
+      monitor_status IN {Z :BOOLEAN | 
+(((monitor_interface_failure=false AND current_temperature.status_attribute=valid) AND (monitor_internal_failure=false AND current_temperature.status_attribute=valid))  =>  Z=true) AND 
+(((monitor_interface_failure=true OR NOT( current_temperature.status_attribute=valid )) OR (monitor_internal_failure=true OR NOT( current_temperature.status_attribute=valid )))  =>  Z=false)};
     INITIALIZATION
+      monitor_mode=init;
   TRANSITION
       [
+        ((regulator_mode=normal AND regulator_status=false) --> regulator_mode=failed)
+ [] 
+((regulator_mode=init AND regulator_init_timeout=true) --> regulator_mode=failed)
+        ((monitor_mode=init AND monitor_status=true) --> monitor_mode=normal)
+ [] 
+((monitor_mode=normal AND monitor_status=false) --> monitor_mode=failed)
+ [] 
+((monitor_mode=init AND monitor_init_timeout=true) --> monitor_mode=failed)
         []
         ELSE -->
       ]
   END;
+  theorem0: THEOREM main |- G((regulator_mode=failed => NOT(F ( regulator_mode=normal ))));
+  theorem1: THEOREM main |- G((monitor_mode=failed => NOT(F ( regulator_mode=normal ))));
 END

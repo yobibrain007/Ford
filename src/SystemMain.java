@@ -52,7 +52,7 @@ import edu.stanford.nlp.ling.SentenceUtils;
 
 public class SystemMain {
 
-	static final String REQ_FILE_PATH = "src/req.txt";
+	static final String REQ_FILE_PATH = "src/requirements.txt";
 	static final String SAL_MODEL_FILE_PATH = "src/SALModel.txt";
 	static final String STATE_VARIABLES_FILE_PATH = "src/statVars.txt";
 

@@ -173,6 +173,11 @@ public class Controller {
 		
 		ArrayList<String> model;
 		
+		for (String r : transformedSALRules){
+			SALTransformation.idntifyVariables(r);
+		}
+		
+		SALTransformation.defineVariables();
 		model = SALTransformation.generateSALModel(statVars, transformedSALRules);
 		
 		return model;

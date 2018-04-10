@@ -10,14 +10,21 @@ import org.jpl7.fli.predicate_t;
 
 public class SALTransformation {
 	
-	public static enum ExecutionType {e, NMOD, NEG, G, F, NEV, UNT, AND, OR, IMP, EQ, EXC, LT, DOM, ATOM,
+	public static enum ExecutionType {e, NMOD, NEG, G, F, NEV, UNT, AND, OR, IMP, EQ, EXC, DOM, ATOM,
 		SET, SET1, CLR, INIT, SEND, TRAN, REC, IN, BOOL, NUM, DOT, VALUE, ARITH}
 
+	private static HashMap<String, String> variables = new HashMap<String, String>();
+	private static HashMap<String, String> attributes = new HashMap<String, String>();
+	private static HashMap<String, String> definedTypes = new HashMap<String, String>();
 	private static HashMap<String, String> definedVariables = new HashMap<String, String>();
+	private static HashMap<String, String> definedTypesBeforeUpdate = new HashMap<String, String>();
 	
 	private static HashMap<String, String> definition = new HashMap<String, String>();
 	private static HashMap<String, String> intialization = new HashMap<String, String>();
 	private static HashMap<String, String> transition = new HashMap<String, String>();
+	private static ArrayList<String> theorem = new ArrayList<String>();
+
+	private static int newTypeIndex;
 	
 	public static String transformFunction(String text, HashMap<String, String> IR){
 		
@@ -76,12 +83,10 @@ public class SALTransformation {
 		else if(nxtExcPart.contains("impliedby:"))
 			type = ExecutionType.IMP;
 		
-		else if(restOfText.contains("exceed") && nxtExcPart.contains("arg1"))
-			type = ExecutionType.EXC;
-		else if(restOfText.contains("is_less_than_or_equal")&& nxtExcPart.contains("arg1"))
-			type = ExecutionType.LT;
 		else if(restOfText.contains("equal") && nxtExcPart.contains("arg1"))
 			type = ExecutionType.EQ;
+		else if(restOfText.contains("exceed") && nxtExcPart.contains("arg1"))
+			type = ExecutionType.EXC;
 		else if(restOfText.contains("dominate") && nxtExcPart.contains("arg1"))
 			type = ExecutionType.DOM;
 		
@@ -188,11 +193,6 @@ public class SALTransformation {
 				executionOut = transformFunction(values[0], IR) + ">" + transformFunction(values[1], IR);
 				break;
 			
-			case LT:
-				values = getValues(crrExcPart, "arg1=", "arg2=");
-				executionOut = transformFunction(values[0], IR) + "<=" + transformFunction(values[1], IR);
-				break;
-				
 			case DOM:
 				values = getValues(crrExcPart, "arg1=", "arg2=");
 				executionOut = transformFunction(values[0], IR) + ">=" + transformFunction(values[1], IR);
@@ -307,6 +307,224 @@ public class SALTransformation {
 		return values;
 	}
 	
+	public static void idntifyVariables(String req){
+		String [] items = req.split(" ");
+		ArrayList<String> data;
+		String TypeVal;
+		for (String s : items){
+			data = getSeparatedData(s);
+			if(data != null)
+				updateVariables(data);
+		}
+	}
+
+	private static void updateVariables(ArrayList<String> data) {
+		String equalityVal, temp;
+		if(data.get(3) != null){
+			addVariable(data.get(2), data.get(3));
+			addAttribute(data.get(3), "");
+			equalityVal = data.get(3);
+		}
+		else
+			equalityVal = data.get(2);
+			
+		if(data.get(1) != null){
+			addVariable(data.get(0), data.get(1));
+			addAttribute(data.get(1), equalityVal);
+		}
+		else
+			addVariable(data.get(0), equalityVal);
+	}
+
+	private static void addAttribute(String key, String val) {
+		addMapEntry(key, val, attributes);
+	}
+
+
+	private static void addVariable(String key, String val) {
+		addMapEntry(key, val, variables);
+	}
+
+	private static void addMapEntry(String key, String val, HashMap<String, String> map){
+		String temp;
+		
+		if(key.equals(val))
+			return;
+		if(!map.keySet().contains(key))
+			map.put(key, " "+val);
+		else{
+			temp = map.get(key);
+			if(!temp.contains(" " + val))
+				temp = temp + ", " + val;
+			map.remove(key);
+			map.put(key, temp);
+		}
+	}
+	// provides all variables and values separated
+	private static ArrayList<String> getSeparatedData(String s) {
+		String [] data;
+		ArrayList<String> separatedData = new ArrayList<String>();
+		
+		s = s.replace(")", "");
+		s = s.replace("(", "");
+		
+		//means implication sign
+		if(s.contains("=>"))
+			return null;
+		else if(s.contains("="))
+			data = s.split("=");
+		else if( s.contains(">"))
+			data = s.split(">");
+		else if( s.contains("<"))
+			data = s.split("<");
+		else if( s.contains(">="))
+			data = s.split(">=");
+		else if( s.contains("<="))
+			data = s.split("<=");
+		else 
+			return null;
+		
+		separatedData.addAll(Arrays.asList(getDecomposedData(data[0])));
+		separatedData.addAll(Arrays.asList(getDecomposedData(data[1])));
+		
+		return separatedData;
+	}
+
+	//split properties from variable (e.g., X.y ... output ls {X, Y} )
+	private static String [] getDecomposedData(String s) {
+		String [] decomposedData = {s, null};
+		if(s.contains("."))
+			decomposedData = s.split("\\.");
+		return decomposedData;
+	}
+	
+	public static void print (){
+		System.out.println(variables);
+		System.out.println(attributes);
+		System.out.println(definedTypes);
+		System.out.println(definedVariables);
+	}
+	
+	public static void defineVariables(){
+		newTypeIndex = 0;
+		for (Entry<String, String> e : variables.entrySet()) {
+			defineOneVariable(e.getKey(), e.getValue());
+		}
+	}
+
+	private static void defineOneVariable(String var, String val) {
+		boolean succeded;
+		val = val.replace(" ", "");
+		String type = getPrimitiveType(val);
+		if(type != null)
+			definedVariables.put(var, type);
+		else {
+			succeded = checkIfEquivelentToAnotherVariable(var, val);
+			if(!succeded)
+				succeded = checkIfCompositeAttributes(var, val);
+			if(!succeded){
+				type = defineNewType("TYPE = {" + val + "}");
+				definedTypesBeforeUpdate.put(val, type);
+				definedVariables.put(var, type);
+				newTypeIndex++;
+			}
+		}
+		
+	}
+	private static String getPrimitiveType(String val){
+		String type= null;
+		if(val.contains("true") || val.contains("false"))
+			return "BOOLEAN";
+		else if(val.equals(""))
+			return "Integer";
+			
+		type = getPreDefinedType(val);
+		return type;
+	}
+
+
+	private static String getPreDefinedType(String val) {
+		for (String key : definedTypesBeforeUpdate.keySet()) 
+			if(equivelent(key, val))
+				return definedTypesBeforeUpdate.get(key);
+		
+		return null;
+	}
+
+	private static boolean equivelent(String key, String val) {
+		String [] data = val.split(",");
+		
+		for (String s : data)
+			if(!key.contains(s))
+				return false;
+		return true;
+	}
+
+	private static String defineNewType(String val) {
+		String type = "type"+String.valueOf(newTypeIndex);
+		definedTypes.put(val, type);
+		newTypeIndex++;
+		return type;
+	}
+
+	private static boolean checkIfEquivelentToAnotherVariable(String var, String val) {
+		String newVal = null;
+		String [] data;
+		if(val.contains(","))
+			data = val.split(",");
+		else{
+			data = new String[1];
+			data[0] = val;
+		}
+		
+		for (String s : data) 
+			if(variables.keySet().contains(s)){
+				newVal = s;
+				break;
+			}
+			
+		if(newVal == null)
+			return false;
+		
+		if(!definedVariables.keySet().contains(val))
+			defineOneVariable(newVal, variables.get(newVal));
+		
+		definedVariables.put(var, definedVariables.get(newVal));
+		
+		return true;
+	}
+	
+	private static boolean checkIfCompositeAttributes(String var, String val) {
+		String type, tempVal, temp = "TYPE = [# ";
+		String [] attr;
+		if(val.contains(","))
+			attr = val.split(",");
+		else{
+			attr = new String[1];
+			attr[0] = val;
+		}
+		
+		if(!attributes.keySet().contains(attr[0]))
+			return false;
+		for (String s : attr) {
+			tempVal = attributes.get(s).replace(" ", "");
+			type = getPrimitiveType(tempVal);
+			if(type == null){
+				type = defineNewType("TYPE = {" + tempVal + "}");
+				definedTypesBeforeUpdate.put(tempVal, type);
+			}
+			temp = temp + s + " : " + type + " , ";
+		}
+		temp = temp.substring(0, temp.length()-3);
+		temp += " #]";
+		
+		type = defineNewType(temp);
+		definedTypesBeforeUpdate.put(val, type);
+		definedVariables.put(var, type);
+		
+		return true;
+	}
+	
 	public static ArrayList<String> generateSALModel(ArrayList<String> statVars, ArrayList<String> modelRules){
 		ArrayList<String> model;
 		
@@ -324,6 +542,10 @@ public class SALTransformation {
 	private static void assignRule(String r, ArrayList<String> statVars) {
 		String[] ruleSides;
 		String ctlVar;
+		if(r.toLowerCase().contains("(f ") || r.toLowerCase().contains("g(") || r.toLowerCase().contains("u(")){
+			theorem.add(r);
+			return;
+		}
 		
 		ruleSides = r.split("=>");
 		if(ruleSides.length == 1)
@@ -378,12 +600,12 @@ public class SALTransformation {
 		model.add("faa : CONTEXT =");
 		model.add("BEGIN");
 		
-	//	model.addAll(addDefinedTypes("  "));
+		model.addAll(addDefinedTypes("  "));
 		
 		model.add("  main : MODULE =");
 		model.add("  BEGIN");
 		
-	//	model.addAll(addDefinedVars("    "));
+		model.addAll(addDefinedVars("    "));
 		
 		model.add("    DEFINITION");
 		
@@ -399,13 +621,30 @@ public class SALTransformation {
 		
 		model.add("  END;");
 		
-	//	model.addAll(addTheorem("  theorem"));
+		model.addAll(addTheorem("  theorem"));
 		
 		model.add("END");
 		
 		return model;
 	}
 
+	private static ArrayList<String> addDefinedTypes(String spaces) {
+		ArrayList<String> _definedTypes =  new ArrayList<String>();
+		
+		for (Entry<String, String> e : definedTypes.entrySet())
+			_definedTypes.add(spaces + e.getValue() + " : " + e.getKey() + ";");
+		
+		return _definedTypes;
+	}
+
+	private static ArrayList<String> addDefinedVars(String spaces) {
+		ArrayList<String> _definedVariables =  new ArrayList<String>();
+		
+		for (Entry<String, String> e : definedVariables.entrySet())
+			_definedVariables.add(spaces + e.getKey() + " : " + e.getValue());
+		
+		return _definedVariables;
+	}
 
 	private static ArrayList<String> addDefinitions(String spaces) {
 		ArrayList<String> _definition =  new ArrayList<String>();
@@ -440,4 +679,15 @@ public class SALTransformation {
 		return _transition;
 	}
 
-}
+	private static ArrayList<String> addTheorem(String prefix) {
+		ArrayList<String> _theorem =  new ArrayList<String>();
+		int i = 0;
+		for (String s : theorem){
+			_theorem.add(prefix + String.valueOf(i) + ": THEOREM main |- G(" + s + ");");
+			i++;
+		}
+		
+		return _theorem;
+		
+	}
+	}
